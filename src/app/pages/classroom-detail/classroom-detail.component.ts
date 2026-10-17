@@ -34,14 +34,14 @@ export class ClassroomDetailComponent {
   loadAssignments() {
     this.loading.set(true);
     this.assignmentSrv.list(this.classroomId).subscribe({
-      next: assignments => {
+      next: (assignments) => {
         this.assignments.set(assignments);
         this.loading.set(false);
       },
-      error: response => {
+      error: (response) => {
         this.errorMessage.set(response.error?.message ?? 'Non hai accesso a questa classe');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -51,7 +51,6 @@ export class ClassroomDetailComponent {
     modalRef.closed.subscribe(() => this.loadAssignments());
   }
 
-  // bonus: il docente clicca un'attività e vede chi l'ha completata
   openStudentsModal(assignment: Assignment) {
     if (!this.authSrv.isTeacher()) {
       return;
@@ -71,7 +70,7 @@ export class ClassroomDetailComponent {
       },
       error: () => {
         this.completingId.set(null);
-      }
+      },
     });
   }
 }

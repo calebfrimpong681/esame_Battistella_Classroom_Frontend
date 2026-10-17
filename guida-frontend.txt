@@ -1,0 +1,194 @@
+=====================================================================
+GUIDA FRONTEND - ESAME CLASSI E ATTIVITA'
+=====================================================================
+
+Frontend: Angular (componenti standalone) + Bootstrap + ng-bootstrap.
+Parla con il backend tramite HttpClient. Indirizzo in locale:
+http://localhost:4200
+
+---------------------------------------------------------------------
+0. COME AVVIARLO
+---------------------------------------------------------------------
+Servono DUE terminali, uno per il backend e uno per il frontend.
+
+   Terminale 1 (cartella backend):
+       npm run dev          (MongoDB deve essere acceso)
+
+   Terminale 2 (cartella frontend):
+       npm install          (solo la prima volta)
+       npm start
+
+Poi apri http://localhost:4200
+
+Il file proxy.conf.json inoltra ogni chiamata che inizia con /api
+verso http://localhost:3000. Per questo nel codice Angular gli
+indirizzi sono scritti solo "/api/classrooms" e non
+"http://localhost:3000/api/classrooms". Se il backend non e' acceso,
+login e registrazione danno errore di connessione.
+
+Nota: durante la build compare un avviso sulla dimensione del bundle
+("exceeded maximum budget"). E' normale (Bootstrap pesa) e non blocca
+niente.
+
+---------------------------------------------------------------------
+1. PERCORSO DI COLLAUDO DA BROWSER
+---------------------------------------------------------------------
+Parti con il database vuoto (vedi guida backend) e segui l'ordine.
+
+PASSO 1 - REGISTRAZIONE DOCENTE
+Dove: pulsante "Registrati" nella navbar (o /register).
+Cosa fare: compila email, password, nome, cognome, url immagine
+(es. https://i.pravatar.cc/150?u=prof) e scegli "Docente".
+Perche': la consegna vuole che il ruolo si scelga in registrazione.
+Risultato: dopo la registrazione vieni portato alla pagina di login
+(il backend non fa login automatico: il token arriva solo dal login).
+Se la password e' debole (serve maiuscola, minuscola, numero e
+simbolo) compare in rosso il messaggio del server.
+
+PASSO 2 - REGISTRAZIONE DI DUE STUDENTI
+Stessa pagina, scegli "Studente". Registrali TUTTI ora, prima di
+creare la classe: una classe non si modifica dopo la creazione, quindi
+uno studente registrato dopo non si puo' aggiungere a una classe
+esistente (e' voluto dalla consegna).
+
+PASSO 3 - LOGIN COME DOCENTE
+Dove: /login.
+Risultato: arrivi su "Le mie classi". Nella navbar compaiono il tuo
+nome, il badge "Docente" e il pulsante Logout. Il pulsante
+"Registrati/Login" sparisce.
+Errore da provare: password sbagliata -> messaggio rosso sotto il
+form, ad esempio "invalid password".
+
+PASSO 4 - CREARE UNA CLASSE (SOLO DOCENTE)
+Dove: pulsante "+ Nuova classe" in "Le mie classi".
+Cosa fare: si apre una finestra (modal ng-bootstrap). Scrivi il nome
+e spunta gli studenti dalla lista di checkbox, poi "Crea classe".
+Perche': la consegna dice "darle un nome e selezionare gli studenti".
+Risultato: la classe appare in lista con nome, docente e numero
+studenti ("2 studenti").
+Errore da provare: "Crea classe" senza nome o senza studenti -> messaggio
+"Inserisci un nome e seleziona almeno uno studente".
+
+PASSO 5 - LOGIN COME STUDENTE
+Fai Logout e accedi con uno studente.
+Risultato: vede la lista con la classe in cui e' stato inserito. NON
+vede il pulsante "+ Nuova classe" (e' solo dei docenti).
+Uno studente non inserito in nessuna classe vede "Nessuna classe da
+mostrare": e' normale, non e' un errore.
+
+PASSO 6 - ENTRARE NELLA CLASSE
+Clicca sulla classe (sia da docente sia da studente).
+Risultato: pagina "Attivita'" con l'elenco delle attivita' della classe.
+
+PASSO 7 - CREARE UN'ATTIVITA' (SOLO DOCENTE)
+Accedi come docente, entra nella classe, "+ Nuova attivita'": scrivi la
+descrizione e "Crea". L'attivita' compare in lista.
+Ogni riga mostra: descrizione, data di creazione e "0/2 completata"
+(studenti che l'hanno completata sul totale).
+
+PASSO 8 - COMPLETARE UN'ATTIVITA' (SOLO STUDENTE)
+Accedi come studente, entra nella classe.
+Ogni attivita' non completata ha il pulsante "Segna come completata".
+Cliccalo: il pulsante diventa il badge verde "Completata", compare la
+data e l'ora del completamento (bonus) e il contatore passa a "1/2".
+Il pulsante non riappare piu' per quell'attivita'.
+
+PASSO 9 - VISTA DEL DOCENTE SUGLI STUDENTI (BONUS)
+Accedi come docente, entra nella classe e clicca su un'attivita'
+(c'e' una scritta che lo ricorda sopra la lista).
+Si apre una finestra con tutti gli studenti: badge verde "Completata il
+gg/mm/aaaa hh:mm" per chi ha finito, badge grigio "Non completata" per
+gli altri.
+
+PASSO 10 - LOGOUT
+Pulsante Logout nella navbar: cancella il token e torna al login.
+
+---------------------------------------------------------------------
+2. CONTROLLI DI ACCESSO DA PROVARE
+---------------------------------------------------------------------
+"Tutte le pagine richiedono autenticazione":
+ - Senza essere loggato, scrivi nella barra /classrooms: vieni portato
+   a /login. Dopo il login torni alla pagina che volevi (il percorso
+   e' memorizzato nel parametro ?dest= dell'indirizzo).
+
+"Ogni utente puo' accedere alla pagina attivita' solo se e' il docente
+che ha creato la classe o uno studente iscritto":
+ - Copia l'indirizzo di una classe (/classrooms/<id>), fai logout,
+   accedi con uno studente NON iscritto (o un altro docente) e incolla
+   l'indirizzo. Compare un riquadro rosso con il messaggio d'errore
+   del server e nessuna attivita'. Il controllo vero e' nel backend:
+   il frontend si limita a mostrare l'errore.
+
+---------------------------------------------------------------------
+3. COSA VEDE OGNI RUOLO
+---------------------------------------------------------------------
+                                   DOCENTE        STUDENTE
+ Lista classi                      quelle create  quelle iscritto
+ Pulsante "+ Nuova classe"         si             no
+ Pulsante "+ Nuova attivita'"      si             no
+ Clic su attivita' = elenco        si             no
+ studenti
+ "Segna come completata"           no             si (se non fatta)
+ Data di completamento             nel modal      sulla riga
+                                                  dell'attivita'
+
+I controlli si fanno nei template con i signal isTeacher() e
+isStudent() dell'AuthService. Il frontend decide solo quali pulsanti
+mostrare: i dati arrivano gia' filtrati dal backend, e il backend
+rifiuta comunque le azioni non permesse.
+
+---------------------------------------------------------------------
+4. MAPPA: PAGINA / COMPONENTE -> CHIAMATA API -> PERCHE'
+---------------------------------------------------------------------
+pages/register         POST /api/register
+                       crea l'account con il ruolo scelto
+pages/login            POST /api/login
+                       ottiene il token, che viene salvato in
+                       localStorage (JwtService)
+services/auth.service  GET /api/users/me (all'avvio dell'app)
+                       ricostruisce chi e' loggato dopo un refresh
+                       della pagina, usando il token salvato
+components/navbar      nessuna chiamata: legge lo stato di
+                       AuthService (nome, ruolo, logout)
+pages/classroom-list   GET /api/classrooms
+                       la lista e' gia' giusta per il ruolo
+components/create-     GET /api/users?type=student   (checkbox)
+classroom-modal        POST /api/classrooms          (crea)
+pages/classroom-       GET /api/classrooms/:id/assignments
+detail                 PATCH /api/classrooms/:id/assignments/:aid
+                       lista attivita' e completamento
+components/create-     POST /api/classrooms/:id/assignments
+assignment-modal
+components/assignment- GET /api/classrooms/:id/assignments/:aid/students
+students-modal         vista docente (bonus)
+
+Pezzi trasversali (copiati dal progetto fatto a lezione):
+ utils/auth.interceptor   aggiunge "Authorization: Bearer <token>" a
+                          OGNI chiamata, cosi' nessun service deve
+                          farlo a mano
+ utils/auth.guard         blocca la navigazione alle pagine protette
+                          se non sei loggato
+ services/jwt.service     salva e legge il token da localStorage
+
+Il guard protegge la NAVIGAZIONE (esperienza utente); i controlli del
+backend proteggono i DATI. Servono entrambi: chiamando le API
+direttamente da Postman il guard non esiste.
+
+---------------------------------------------------------------------
+5. REQUISITI DELLA CONSEGNA -> DOVE SONO
+---------------------------------------------------------------------
+ Registrazione con scelta del ruolo   pages/register
+ Login comune                         pages/login
+ Navbar utente/login + logout         components/navbar
+ Tutte le pagine autenticate          utils/auth.guard
+ Lista classi (nome, docente, n.)     pages/classroom-list
+ Creazione classe nome + studenti     components/create-classroom-modal
+ Pagina attivita' (descrizione,       pages/classroom-detail
+ data, x/y, pulsante completamento)
+ Accesso solo a chi appartiene alla   controllo nel backend,
+ classe                               errore mostrato dal frontend
+ Proxy configurato                    proxy.conf.json
+ ng-bootstrap usato                   NgbModal nelle 3 finestre
+ Suddivisione in componenti           components/ e pages/
+ Bonus: vista docente sugli studenti  components/assignment-students-modal
+ Bonus: data di completamento         classroom-detail e il modal
