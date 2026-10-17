@@ -1,0 +1,30 @@
+<div class="container mt-5">
+  <div class="row">
+    <div class="col col-lg-4"></div>
+    <div class="col col-lg-4 col-md-12 border rounded p-4">
+      <h3 class="mb-4 text-center">Login</h3>
+
+      <form [formGroup]="loginForm" (ngSubmit)="login()">
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input class="form-control" type="text" formControlName="username">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input class="form-control" type="password" formControlName="password">
+        </div>
+
+        <div class="text-danger mb-3">{{ errorMessage() }}</div>
+
+        <div class="text-center">
+          <button [disabled]="loginForm.invalid" type="submit" class="btn btn-primary mb-3">Accedi</button>
+        </div>
+
+        <div class="text-center">
+          <a routerLink="/register">Non hai un account? Registrati</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
